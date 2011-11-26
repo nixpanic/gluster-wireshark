@@ -44,8 +44,8 @@ bool_t gluster_decode_oa(XDR *xdr)
 	/* FIXME: use xdr_bytes() instead? */
 	while (units_read < (oa_length / BYTES_PER_XDR_UNIT)) {
 		if (!xdr_uint32_t(xdr, oa_data + units_read)) {
-			DEBUG("could only read %d/%d \n", units_read, (oa_length / BYTES_PER_XDR_UNIT));
-			return;
+			DEBUG("FAIL: could only read %d/%d \n", units_read, (oa_length / BYTES_PER_XDR_UNIT));
+			return FALSE;
 		}
 		units_read++;
 	}
@@ -55,6 +55,8 @@ bool_t gluster_decode_oa(XDR *xdr)
 	DEBUG("oa_data: (%d units of %d bytes read)\n", units_read, BYTES_PER_XDR_UNIT);
 
 	free(oa_data);
+
+	return TRUE;
 }
 
 /* rpc/rpc-lib/src/rpc-common.c xdr_gf_dump_rsp
@@ -93,20 +95,20 @@ gluster_prog_t* gluster_get_prog(uint32_t prognum, uint32_t progver)
 		i++;
 	}
 
-	DEBUG("FIXME: not implemented yet (prognum=%d, progver=%d\n", prognum, progver);
+	DEBUG("FIXME: not implemented yet (prognum=%d, progver=%d)\n", prognum, progver);
 	return NULL;
 }
 
 gluster_prog_proc_t* gluster_get_proc(gluster_prog_t *prog, uint32_t procnum)
 {
-	int i = 0;
-	/* FIXME: is this a valid check? */
-	while (prog->procs[i].procname != NULL) {
+	int i;
+
+	for (i = 0; i < prog->nr_procs; i++) {
 		if (prog->procs[i].procnum == procnum)
 			return &prog->procs[i];
-		i++;
 	}
 
+	DEBUG("FIXME: not implemented yet (prognum=%d, progver=%d, procnum=%d)\n", prog->prognum, prog->progver, procnum);
 	return NULL;
 }
 
@@ -273,3 +275,107 @@ void gluster_decode_packet(void *packet, size_t size)
 cleanup:
 	xdr_destroy(&xdr);
 }
+
+
+/* procedures for GD_MGMT_PROGRAM */
+static gluster_prog_proc_t gluster_mgmt_procs[] = {
+	{
+		.procname = "procedure for mgmt",
+		.procnum = 0 /*TODO*/,
+	},
+};
+
+/* procedures for GLUSTER_DUMP_PROGRAM */
+static gluster_prog_proc_t gluster_dump_procs[] = {
+	{
+		.procname = "NULL",
+		.procnum = GF_DUMP_NULL,
+	},
+	{
+		.procname = "DUMP",
+		.procnum = GF_DUMP_DUMP,
+		.xdr_decode = gluster_dump_dump_xdr,
+	},
+};
+
+/* procedures for GLUSTER_HNDSK_PROGRAM */
+static gluster_prog_proc_t gluster_hndsk_procs[] = {
+	{
+		.procname = "NULL",
+		.procnum = GF_HNDSK_NULL,
+	},
+	{
+		.procname = "DUMP",
+		.procnum = GF_HNDSK_SETVOLUME,
+//		.xdr_decode = gluster_hndsk_setvolume_xdr,
+	},
+	{
+		.procname = "GETSPEC",
+		.procnum = GF_HNDSK_GETSPEC,
+//		.xdr_decode = gluster_hndsk_getspec_xdr,
+	},
+	{
+		.procname = "PING",
+		.procnum = GF_HNDSK_PING,
+//		.xdr_decode = gluster_hndsk_setvolume_xdr,
+	},
+};
+
+/* mapping all programs, versions to their procedures */
+static gluster_prog_t gluster_progs[] = {
+	{
+		.progname = "prog for mgmt",
+		.prognum = GD_MGMT_PROGRAM,
+		.progver = 0,
+		.procs = gluster_mgmt_procs,
+		.nr_procs = GD_MGMT_MAXVALUE,
+	},
+	{
+		.progname = "GF-DUMP",
+		.prognum = GLUSTER_DUMP_PROGRAM,
+		.progver = 1,
+		.procs = gluster_dump_procs,
+		.nr_procs = GF_DUMP_MAXVALUE,
+	},
+	{
+		.progname = "GlusterFS Handshake",
+		.prognum = GLUSTER_HNDSK_PROGRAM,
+		.progver = 1,
+		.procs = gluster_hndsk_procs,
+		.nr_procs = GF_HNDSK_MAXVALUE,
+	},
+	{ /* terminating entry */
+		.prognum = -1,
+		.progver = -1,
+		.nr_procs = 0,
+	},
+};
+
+/* from rpc/rpc-lib/src/rpcsvc.h
+311 #define RPCSVC_NAME_MAX            32
+315 typedef struct rpcsvc_actor_desc {
+316         char                    procname[RPCSVC_NAME_MAX];
+317         int                     procnum;
+318         rpcsvc_actor            actor;
+328         rpcsvc_vector_actor     vector_actor;
+329         rpcsvc_vector_sizer     vector_sizer;
+330 
+331 } rpcsvc_actor_t;
+*/
+
+/* from rpc/rpc-lib/src/rpcsvc.c
+2380 rpcsvc_actor_t gluster_dump_actors[] = {
+2381         [GF_DUMP_NULL] = {"NULL", GF_DUMP_NULL, NULL, NULL, NULL },
+2382         [GF_DUMP_DUMP] = {"DUMP", GF_DUMP_DUMP, rpcsvc_dump, NULL, NULL },
+2383         [GF_DUMP_MAXVALUE] = {"MAXVALUE", GF_DUMP_MAXVALUE, NULL, NULL, NULL },
+2384 };
+2385 
+2386 
+2387 struct rpcsvc_program gluster_dump_prog = {
+2388         .progname  = "GF-DUMP",
+2389         .prognum   = GLUSTER_DUMP_PROGRAM,
+2390         .progver   = GLUSTER_DUMP_VERSION,
+2391         .actors    = gluster_dump_actors,
+2392         .numactors = 2,
+2393 };
+*/
