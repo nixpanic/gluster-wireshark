@@ -293,6 +293,11 @@ static gluster_prog_proc_t gluster_mgmt_procs[] = {
 	{ ADD_PROC_NAME_NUM("FRIEND_UPDATE", GLUSTERD_MGMT_FRIEND_UPDATE) },
 };
 
+static gluster_prog_proc_t gluster_glusterfs_mgmt_procs[] = {
+	{ ADD_PROC_NAME_NUM("NULL", GD_MGMT_NULL) },
+	{ ADD_PROC_NAME_NUM("BRICK_OP", GD_MGMT_BRICK_OP) },
+};
+
 /* procedures for GLUSTER_DUMP_PROGRAM */
 static gluster_prog_proc_t gluster_dump_procs[] = {
 	{ ADD_PROC_NAME_NUM("NULL", GF_DUMP_NULL) },
@@ -311,29 +316,37 @@ static gluster_prog_proc_t gluster_hndsk_procs[] = {
 static gluster_prog_t gluster_progs[] = {
 	{
 		.progname = "glusterd clnt mgmt",
-		.prognum = GD_MGMT_PROGRAM,
-		.progver = 1,
-		.procs = gluster_mgmt_procs,
+		.prognum  = GD_MGMT_PROGRAM,
+		.progver  = 1,
+		.procs    = gluster_mgmt_procs,
 		.nr_procs = GLUSTERD_MGMT_MAXVALUE,
 	},
 	{
 		.progname = "GF-DUMP",
-		.prognum = GLUSTER_DUMP_PROGRAM,
-		.progver = 1,
-		.procs = gluster_dump_procs,
+		.prognum  = GLUSTER_DUMP_PROGRAM,
+		.progver  = 1,
+		.procs    = gluster_dump_procs,
 		.nr_procs = GF_DUMP_MAXVALUE,
 	},
 	{
 		.progname = "GlusterFS Handshake",
-		.prognum = GLUSTER_HNDSK_PROGRAM,
-		.progver = 1,
-		.procs = gluster_hndsk_procs,
+		.prognum  = GLUSTER_HNDSK_PROGRAM,
+		.progver  = 1,
+		.procs    = gluster_hndsk_procs,
 		.nr_procs = GF_HNDSK_MAXVALUE,
 	},
-	{ /* terminating entry */
-		.prognum = -1,
-		.progver = -1,
-		.nr_procs = 0,
+	{
+		.progname  = "GlusterFS Mops",
+		.prognum   = GLUSTERFS_PROGRAM,
+		.progver   = 1,
+		.procs     = gluster_glusterfs_mgmt_procs,
+		.nr_procs  = GF_BRICK_MAXVALUE,
+	},
+	{	/* terminating entry */
+		.progname  = "(unused termination entry)",
+		.prognum   = -1,
+		.progver   = -1,
+		.nr_procs  = 0,
 	},
 };
 

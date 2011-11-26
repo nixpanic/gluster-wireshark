@@ -198,6 +198,15 @@ enum glusterd_mgmt_procnum {
 	GLUSTERD_MGMT_MAXVALUE,
 };
 
+/* rpc/rpc-lib/src/protocol-common.h */
+enum gf_brick_procnum {
+	GF_BRICK_NULL = 0,
+	GF_BRICK_TERMINATE = 1,
+	GF_BRICK_XLATOR_INFO = 2,
+	GF_BRICK_XLATOR_HEAL = 3,
+	GF_BRICK_MAXVALUE
+};
+
 enum gluster_prog_hndsk_procs {
 	GF_HNDSK_NULL,
 	GF_HNDSK_SETVOLUME,
