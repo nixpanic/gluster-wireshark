@@ -22,6 +22,11 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
+#ifndef __PACKET_GLUSTER_H__
+#define __PACKET_GLUSTER_H__
+
+/* from rpc/rpc-lib/src/rpcsvc.h */
+#define RPCSVC_NAME_MAX         32
 
 /* this comes from rpc/rpc-lib/src/protocol-common.h
  * TODO: use libglusterfs-devel
@@ -66,7 +71,6 @@ enum gf_mgmt_procnum_ {
         GD_MGMT_CLI_STATUS_VOLUME,
         GD_MGMT_MAXVALUE,
 };
-
 typedef enum gf_mgmt_procnum_ gf_mgmt_procnum;
 
 
@@ -152,3 +156,67 @@ struct rpc_clnt_procedure gluster_cli_actors[GLUSTER_CLI_MAXVALUE] = {
 */
 
 
+enum gluster_msg_direction {
+	CALL = 0,
+	REPLY = 1,
+	UNIVERSAL_ANSWER = 42,
+};
+
+/* numbers are spread over a load of files */
+enum gluster_prognums {
+	GD_MGMT_PROGRAM        = 1238433,
+	GLUSTER3_1_FOP_PROGRAM = 1298437,
+	GLUSTER_CBK_PROGRAM    = 52743234,
+	GLUSTER_CLI_PROGRAM    = 1238463,
+	GLUSTERD1_MGMT_PROGRAM = 1298433,
+	GLUSTER_DUMP_PROGRAM   = 123451501,
+	GLUSTERFS_PROGRAM      = 4867634,
+	GLUSTER_HNDSK_PROGRAM  = 14398633,
+	GLUSTER_PMAP_PROGRAM   = 34123456,
+	MOUNT_PROGRAM          = 100005,
+	NFS_PROGRAM            = 100003,
+};
+
+/* rpc/rpc-lib/src/xdr-common.h:gf_dump_procnum
+ * gf_dump_procnum does not contain a 0-value */
+enum gluster_prog_dump_procs {
+	GF_DUMP_NULL /* = 0 */,
+	GF_DUMP_DUMP,
+	GF_DUMP_MAXVALUE,
+};
+
+enum gluster_prog_hndsk_procs {
+	GF_HNDSK_NULL,
+	GF_HNDSK_SETVOLUME,
+	GF_HNDSK_GETSPEC,
+	GF_HNDSK_PING,
+	GF_HNDSK_MAXVALUE,
+};
+
+struct gluster_prog_proc {
+	const char* procname;           /* user readable description */
+	uint32_t procnum;               /* procedure number */
+
+	bool_t (*xdr_decode)(XDR *xdr); /* xdr decoding */
+};
+typedef struct gluster_prog_proc gluster_prog_proc_t;
+
+struct gluster_prog {
+	const char progname[RPCSVC_NAME_MAX];  /* user readable description */
+	uint32_t prognum;                      /* program numner */
+	uint32_t progver;                      /* program version */
+
+	gluster_prog_proc_t *procs;            /* procedures of a program */
+	unsigned int nr_procs;                 /* number of elements in *procs */
+};
+typedef struct gluster_prog gluster_prog_t;
+
+struct rpc_hdr {
+	uint32_t rpcver;
+	uint32_t prognum;
+	uint32_t progver;
+	uint32_t procnum;
+};
+typedef struct rpc_hdr rpc_hdr_t;
+
+#endif /* __PACKET_GLUSTER_H__ */
