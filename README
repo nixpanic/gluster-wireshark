@@ -1,0 +1,21 @@
+Development tree for a Wireshark dissector for the Gluster RPC protocol
+
+
+Goals
+
+Teach Wireshark the Gluster RPC protocol to improve potential
+troubleshooting on Gluster networking issues.
+
+Learn details about Gluster networking and potentially document the
+protocol.
+
+
+Planned Development Stages
+
+0) read/understand Gluster communication
+1) parse Gluster RPC packets on the commandline
+2) move the dissector into Wireshark format
+3) submit to upstream Wireshark
+
+
+Author: Niels de Vos <ndevos@redhat.com>
