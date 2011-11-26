@@ -384,6 +384,39 @@ struct gluster_prog {
 };
 typedef struct gluster_prog gluster_prog_t;
 
+struct rpc_hdr {
+	uint32_t rpcver;
+	uint32_t prognum;
+	uint32_t progver;
+	uint32_t procnum;
+};
+typedef struct rpc_hdr rpc_hdr_t;
+
+void gluster_decode_oa(XDR *xdr)
+{
+	uint32_t oa_flavor;
+	xdr_uint32_t(xdr, &oa_flavor);
+
+	uint32_t oa_length;
+	xdr_uint32_t(xdr, &oa_length);
+
+	uint32_t *oa_data = malloc(sizeof(uint32_t) * oa_length);
+	uint32_t units_read = 0;
+	/* FIXME: use xdr_bytes() instead? */
+	while (units_read < (oa_length / BYTES_PER_XDR_UNIT)) {
+		if (!xdr_uint32_t(xdr, oa_data + units_read)) {
+			DEBUG("could only read %d/%d \n", units_read, (oa_length / BYTES_PER_XDR_UNIT));
+			return;
+		}
+		units_read++;
+	}
+
+	DEBUG("oa_flavor: %d\n", oa_flavor);
+	DEBUG("oa_length: %d\n", oa_length);
+	DEBUG("oa_data: (%d units of %d bytes read)\n", units_read, BYTES_PER_XDR_UNIT);
+
+	free(oa_data);
+}
 
 /* rpc/rpc-lib/src/rpc-common.c xdr_gf_dump_rsp
 101          if (!xdr_u_quad_t (xdrs, &objp->gfs_id))
@@ -399,14 +432,37 @@ typedef struct gluster_prog gluster_prog_t;
 */
 bool_t gluster_dump_dump_xdr(XDR *xdr)
 {
+	gluster_decode_oa(xdr);
+
+#if 0
+	uint32_t cb_prognum;
+	xdr_uint32_t(xdr, &cb_prognum);
+	uint32_t cb_progver;
+	xdr_uint32_t(xdr, &cb_progver);
+	uint32_t cb_procnum;
+	xdr_uint32_t(xdr, &cb_procnum);
+
+	DEBUG("cb_prognum: %d\n", cb_prognum);
+	DEBUG("cb_progver: %d\n", cb_progver);
+	DEBUG("cb_procnum: %d\n", cb_procnum);
+#endif
+
 	u_quad_t gfs_id;
 	xdr_u_quad_t(xdr, &gfs_id);
 
-	int32_t op_ret;
-	xdr_int(xdr, &op_ret);
+//	int32_t op_ret;
+//	xdr_int(xdr, &op_ret);
 
+//	int32_t op_errno;
+//	xdr_int(xdr, &op_errno);
+
+// TODO: for what it this pointer used? Is it a local callback-address?
 //	void* prog;
 //	xdr_pointer(xdr, &prog);
+
+	DEBUG("gfs_id: 0x%lx\n", gfs_id[3]);
+//	DEBUG("op_ret: %d\n", op_ret);
+//	DEBUG("op_errno: %d\n", op_errno);
 
 	return TRUE;
 }
@@ -441,6 +497,13 @@ enum gluster_prog_dump_procs {
 	GF_DUMP_MAXVALUE,
 };
 
+enum gluster_prog_hndsk_procs {
+	GF_HNDSK_NULL,
+	GF_HNDSK_SETVOLUME,
+	GF_HNDSK_GETSPEC,
+	GF_HNDSK_PING,
+};
+
 /* procedures for GD_MGMT_PROGRAM */
 static gluster_prog_proc_t gluster_mgmt_procs[] = {
 	{
@@ -462,6 +525,29 @@ static gluster_prog_proc_t gluster_dump_procs[] = {
 	},
 };
 
+/* procedures for GLUSTER_HNDSK_PROGRAM */
+static gluster_prog_proc_t gluster_hndsk_procs[] = {
+	{
+		.procname = "NULL",
+		.procnum = GF_HNDSK_NULL,
+	},
+	{
+		.procname = "DUMP",
+		.procnum = GF_HNDSK_SETVOLUME,
+//		.xdr_decode = gluster_hndsk_setvolume_xdr,
+	},
+	{
+		.procname = "GETSPEC",
+		.procnum = GF_HNDSK_GETSPEC,
+//		.xdr_decode = gluster_hndsk_getspec_xdr,
+	},
+	{
+		.procname = "PING",
+		.procnum = GF_HNDSK_PING,
+//		.xdr_decode = gluster_hndsk_setvolume_xdr,
+	},
+};
+
 /* mapping all programg, versions to their procedures */
 static gluster_prog_t gluster_progs[] = {
 	{ /* TODO: I really have no idea what GD_MGMT_PROGRAM does */
@@ -475,6 +561,12 @@ static gluster_prog_t gluster_progs[] = {
 		.prognum = GLUSTER_DUMP_PROGRAM,
 		.progver = 1,
 		.procs = gluster_dump_procs,
+	},
+	{
+		.progname = "GlusterFS Handshake",
+		.prognum = GLUSTER_HNDSK_PROGRAM,
+		.progver = 1,
+		.procs = gluster_hndsk_procs,
 	},
 };
 
@@ -507,23 +599,15 @@ static gluster_prog_t gluster_progs[] = {
 2393 };
 */
 
-gluster_prog_proc_t* gluster_get_proc(uint32_t prognum, uint32_t progver, uint32_t procnum)
+gluster_prog_t* gluster_get_prog(uint32_t prognum, uint32_t progver)
 {
-	int i = 0, j;
+	int i = 0;
+
 	/* FIXME: is this a valid check? */
 	while (gluster_progs[i].progname != NULL) {
 		if (gluster_progs[i].prognum == prognum &&
-		    gluster_progs[i].progver == progver) {
-
-			/* prognum and progver matches */
-			j = 0;
-			/* FIXME: is this a valid check? */
-			while (gluster_progs[i].procs[j].procname != NULL) {
-				if (gluster_progs[i].procs[j].procnum == procnum)
-					return &gluster_progs[i].procs[j];
-				j++;
-			}
-		}
+		    gluster_progs[i].progver == progver)
+			return &gluster_progs[i];
 
 		i++;
 	}
@@ -531,20 +615,53 @@ gluster_prog_proc_t* gluster_get_proc(uint32_t prognum, uint32_t progver, uint32
 	return NULL;
 }
 
-/* rpc/rpc-transport/socket/src/socket.c:SP_STATE_READ_RPCHDR1 */
-void gluster_decode_call_rpchdr1(XDR *xdr)
+gluster_prog_proc_t* gluster_get_proc(gluster_prog_t *prog, uint32_t procnum)
 {
-	uint32_t prognum;
-	xdr_uint32_t(xdr, &prognum);
+	int i = 0;
+	/* FIXME: is this a valid check? */
+	while (prog->procs[i].procname != NULL) {
+		if (prog->procs[i].procnum == procnum)
+			return &prog->procs[i];
+		i++;
+	}
 
-	uint32_t progver;
-	xdr_uint32_t(xdr, &progver);
+	return NULL;
+}
 
-	uint32_t procnum;
-	xdr_uint32_t(xdr, &procnum);
+/* rpc/rpc-transport/socket/src/socket.c:SP_STATE_READ_RPCHDR1 */
+void gluster_decode_call_rpchdr1(XDR *xdr, rpc_hdr_t *rpchdr)
+{
+	xdr_uint32_t(xdr, &rpchdr->rpcver);
+	xdr_uint32_t(xdr, &rpchdr->prognum);
+	xdr_uint32_t(xdr, &rpchdr->progver);
+	xdr_uint32_t(xdr, &rpchdr->procnum);
+
+	DEBUG("rpcver: %d\n", rpchdr->rpcver);
+	DEBUG("prognum: %d\n", rpchdr->prognum);
+	DEBUG("progver: %d\n", rpchdr->progver);
+	DEBUG("procnum: %d\n", rpchdr->procnum);
+
+}
+
+void gluster_decode_call(XDR *xdr)
+{
+	rpc_hdr_t rpchdr;
+	gluster_decode_call_rpchdr1(xdr, &rpchdr);
 
 	/* data is prognum/progver/procnum dependent */
-	gluster_get_proc(prognum, progver, procnum);
+	gluster_prog_t *prog = gluster_get_prog(rpchdr.prognum, rpchdr.progver);
+	if (prog) {
+		DEBUG("procname: %s\n", prog->progname);
+
+		gluster_prog_proc_t *proc = gluster_get_proc(prog, rpchdr.procnum);
+		if (proc){
+			DEBUG("procname: %s\n", proc->procname);
+			if (proc->xdr_decode)
+				proc->xdr_decode(xdr);
+		}
+	} else {
+		DEBUG("NIY: prognum=%d, progver=%d\n", rpchdr.prognum, rpchdr.progver);
+	}
 
 //	/* authentication type */
 //	uint32_t oa_flavor;
@@ -563,9 +680,6 @@ void gluster_decode_call_rpchdr1(XDR *xdr)
 //	char *gfs_id = NULL; //malloc(GFS_ID_SIZE);
 //	xdr_string(&xdr, &gfs_id, GFS_ID_SIZE);
 //
-	DEBUG("prognum: %d\n", prognum);
-	DEBUG("progver: %d\n", progver);
-	DEBUG("procnum: %d\n", procnum);
 //	DEBUG("cb_proc: %d\n", cb_proc);
 //	DEBUG("oa_flavor: %d\n", oa_flavor);
 //	DEBUG("oa_length: %d\n", oa_length);
@@ -576,13 +690,45 @@ void gluster_decode_call_rpchdr1(XDR *xdr)
 //	xdr_free((xdrproc_t) xdr_string, (char*) &gfs_id);
 }
 
-void gluster_decode_call(XDR *xdr)
-{
-	gluster_decode_call_rpchdr1(xdr);
-}
-
 void gluster_decode_reply(XDR *xdr)
 {
+	uint32_t cb_rpcver;
+	xdr_uint32_t(xdr, &cb_rpcver);
+
+	uint32_t cb_prognum;
+	xdr_uint32_t(xdr, &cb_prognum);
+
+	uint32_t cb_progver;
+	xdr_uint32_t(xdr, &cb_progver);
+
+	uint32_t cb_procnum;
+	xdr_uint32_t(xdr, &cb_procnum);
+
+	DEBUG("cb_rpcver: %d\n", cb_rpcver);
+	DEBUG("cb_prognum: %d\n", cb_prognum);
+	DEBUG("cb_progver: %d\n", cb_progver);
+	DEBUG("cb_procnum: %d\n", cb_procnum);
+
+	gluster_decode_oa(xdr);
+
+	/* data is prognum/progver/procnum dependent */
+
+//	gluster_decode_call_rpchdr1(xdr);
+#if 0
+	gluster_prog_t *prog = gluster_get_prog(prognum, progver);
+	if (prog) {
+		DEBUG("procname: %s\n", prog->progname);
+
+		gluster_prog_proc_t *proc = gluster_get_proc(prog, procnum);
+		if (proc){
+			DEBUG("procname: %s\n", proc->procname);
+			if (proc->xdr_decode)
+				proc->xdr_decode(xdr);
+		}
+	} else {
+		DEBUG("NIY: prognum=%d, progver=%d\n", prognum, progver);
+	}
+#endif
 }
 
 #define GLUSTER_HEADER_LAST_PKT		0x80000000U
@@ -630,6 +776,7 @@ void gluster_decode_packet(void *packet, size_t size)
 			break;
 		case UNIVERSAL_ANSWER:
 			/* gluster < 3.0 protocol */
+			DEBUG("FIXME: this is really unexpected - old protocol?\n");
 			break;
 		default:
 			/* FIXME: bail out? */
