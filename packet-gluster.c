@@ -277,58 +277,44 @@ cleanup:
 }
 
 
-/* procedures for GD_MGMT_PROGRAM */
+#define ADD_PROC_NAME_NUM(name, num)		.procname = name, .procnum = num,
+#define ADD_PROC_NAME_NUM_XDR(name, num, xdr)	.procname = name, .procnum = num, .xdr_decode = xdr,
+
+/* xlators/mgmt/glusterd/src/glusterd-rpc-ops.c */
 static gluster_prog_proc_t gluster_mgmt_procs[] = {
-	{
-		.procname = "procedure for mgmt",
-		.procnum = 0 /*TODO*/,
-	},
+	{ ADD_PROC_NAME_NUM("NULL", GLUSTERD_MGMT_NULL) },
+	{ ADD_PROC_NAME_NUM("PROBE_QUERY", GLUSTERD_MGMT_PROBE_QUERY) },
+	{ ADD_PROC_NAME_NUM("FRIEND_ADD", GLUSTERD_MGMT_FRIEND_ADD) },
+	{ ADD_PROC_NAME_NUM("CLUSTER_LOCK", GLUSTERD_MGMT_CLUSTER_LOCK) },
+	{ ADD_PROC_NAME_NUM("CLUSTER_UNLOCK", GLUSTERD_MGMT_CLUSTER_UNLOCK) },
+	{ ADD_PROC_NAME_NUM("STAGE_OP", GLUSTERD_MGMT_STAGE_OP) },
+	{ ADD_PROC_NAME_NUM("COMMIT_OP", GLUSTERD_MGMT_COMMIT_OP) },
+	{ ADD_PROC_NAME_NUM("FRIEND_REMOVE", GLUSTERD_MGMT_FRIEND_REMOVE) },
+	{ ADD_PROC_NAME_NUM("FRIEND_UPDATE", GLUSTERD_MGMT_FRIEND_UPDATE) },
 };
 
 /* procedures for GLUSTER_DUMP_PROGRAM */
 static gluster_prog_proc_t gluster_dump_procs[] = {
-	{
-		.procname = "NULL",
-		.procnum = GF_DUMP_NULL,
-	},
-	{
-		.procname = "DUMP",
-		.procnum = GF_DUMP_DUMP,
-		.xdr_decode = gluster_dump_dump_xdr,
-	},
+	{ ADD_PROC_NAME_NUM("NULL", GF_DUMP_NULL) },
+	{ ADD_PROC_NAME_NUM_XDR("DUMP", GF_DUMP_DUMP, gluster_dump_dump_xdr) },
 };
 
 /* procedures for GLUSTER_HNDSK_PROGRAM */
 static gluster_prog_proc_t gluster_hndsk_procs[] = {
-	{
-		.procname = "NULL",
-		.procnum = GF_HNDSK_NULL,
-	},
-	{
-		.procname = "DUMP",
-		.procnum = GF_HNDSK_SETVOLUME,
-//		.xdr_decode = gluster_hndsk_setvolume_xdr,
-	},
-	{
-		.procname = "GETSPEC",
-		.procnum = GF_HNDSK_GETSPEC,
-//		.xdr_decode = gluster_hndsk_getspec_xdr,
-	},
-	{
-		.procname = "PING",
-		.procnum = GF_HNDSK_PING,
-//		.xdr_decode = gluster_hndsk_setvolume_xdr,
-	},
+	{ ADD_PROC_NAME_NUM("NULL", GF_HNDSK_NULL) },
+	{ ADD_PROC_NAME_NUM("DUMP", GF_HNDSK_SETVOLUME) },
+	{ ADD_PROC_NAME_NUM("GETSPEC", GF_HNDSK_GETSPEC) },
+	{ ADD_PROC_NAME_NUM("PING", GF_HNDSK_PING) },
 };
 
 /* mapping all programs, versions to their procedures */
 static gluster_prog_t gluster_progs[] = {
 	{
-		.progname = "prog for mgmt",
+		.progname = "glusterd clnt mgmt",
 		.prognum = GD_MGMT_PROGRAM,
-		.progver = 0,
+		.progver = 1,
 		.procs = gluster_mgmt_procs,
-		.nr_procs = GD_MGMT_MAXVALUE,
+		.nr_procs = GLUSTERD_MGMT_MAXVALUE,
 	},
 	{
 		.progname = "GF-DUMP",
