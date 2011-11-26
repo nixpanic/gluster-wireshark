@@ -446,39 +446,14 @@ void gluster_decode_oa(XDR *xdr)
 109                  return FALSE;
 110         return TRUE;
 */
+
+/* DUMP request */
 bool_t gluster_dump_dump_xdr(XDR *xdr)
 {
-	gluster_decode_oa(xdr);
-
-#if 0
-	uint32_t cb_prognum;
-	xdr_uint32_t(xdr, &cb_prognum);
-	uint32_t cb_progver;
-	xdr_uint32_t(xdr, &cb_progver);
-	uint32_t cb_procnum;
-	xdr_uint32_t(xdr, &cb_procnum);
-
-	DEBUG("cb_prognum: %d\n", cb_prognum);
-	DEBUG("cb_progver: %d\n", cb_progver);
-	DEBUG("cb_procnum: %d\n", cb_procnum);
-#endif
-
 	u_quad_t gfs_id;
 	xdr_u_quad_t(xdr, &gfs_id);
 
-//	int32_t op_ret;
-//	xdr_int(xdr, &op_ret);
-
-//	int32_t op_errno;
-//	xdr_int(xdr, &op_errno);
-
-// TODO: for what it this pointer used? Is it a local callback-address?
-//	void* prog;
-//	xdr_pointer(xdr, &prog);
-
-	DEBUG("gfs_id: 0x%lx\n", gfs_id[3]);
-//	DEBUG("op_ret: %d\n", op_ret);
-//	DEBUG("op_errno: %d\n", op_errno);
+	DEBUG("gfs_id: 0x%lx\n", gfs_id);
 
 	return TRUE;
 }
@@ -628,6 +603,7 @@ gluster_prog_t* gluster_get_prog(uint32_t prognum, uint32_t progver)
 		i++;
 	}
 
+	DEBUG("FIXME: not implemented yet (prognum=%d, progver=%d\n", prognum, progver);
 	return NULL;
 }
 
@@ -664,6 +640,11 @@ void gluster_decode_call(XDR *xdr)
 	rpc_hdr_t rpchdr;
 	gluster_decode_call_rpchdr1(xdr, &rpchdr);
 
+	/* oa_cred  */
+	gluster_decode_oa(xdr);
+	/* oa_verf */
+	gluster_decode_oa(xdr);
+
 	/* data is prognum/progver/procnum dependent */
 	gluster_prog_t *prog = gluster_get_prog(rpchdr.prognum, rpchdr.progver);
 	if (prog) {
@@ -676,7 +657,7 @@ void gluster_decode_call(XDR *xdr)
 				proc->xdr_decode(xdr);
 		}
 	} else {
-		DEBUG("NIY: prognum=%d, progver=%d\n", rpchdr.prognum, rpchdr.progver);
+		return;
 	}
 
 //	/* authentication type */
