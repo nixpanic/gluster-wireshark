@@ -60,26 +60,17 @@ RPC-Record Fragment Header
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                   size of the fragment                      |L|
+|                    size of the fragment                     |L|
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 \                                                               \
-/                      RPC-Client Record                        /
-\                                                               \
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-\                                                               \
-/                     programm-header?                          /
+/                           RPC-Data                            /
 \                                                               \
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 
 Size of the Fragment: 31 bits (unsigned integer)
 
-   This is the SCTP sender's port number.  It can be used by the
-   receiver in combination with the source IP address, the SCTP
-   destination port, and possibly the destination IP address to
-   identify the association to which this packet belongs.  The port
-   number 0 MUST NOT be used.
-
+   This is the size of the RPC-fragment, including the first 4 bytes.
 
 L bit: 1 bit
 
