@@ -437,7 +437,12 @@ RPC-Data
  */
 
 XDR: External Data Representation Standard
-http://tools.ietf.org/html/rfc4506
+- http://tools.ietf.org/html/rfc4506
+
+Reading XDR Data:
+- all components are multiples of 4 bytes
+- variable length (like strings) are padded with 0-bytes at the end
+- no type specification, this is up to intepretation by the reader
 
 
  0                   1                   2                   3
@@ -508,18 +513,46 @@ gfs_id: 0xcafe = 51966
 
 nodeB -> nodeA
 
+Implementation in rpc/rpc-lib/src/rpcsvc.c:rpcsvc_dump():
+  \ gf_dump_rsp rsp
+   \ build_prog_details(&rsp) /* writes all progname+procnum+procver to rsp->prog[] */
+    |
+    |- xdr_gf_dump_rsp() /* calculate size of the buffer needed */
+    |
+    \ xdr_serialize_dump_rsp(iov, rsp)
+     |
+     \ xdr_serialize_generic(iov, rsp, xdr_gf_dump_rsp)
+      |
+       \ xdr_gf_dump_rsp(&rsp)
+        |- xdr_u_quad_t(gfs_id)
+        |- xdr_int(op_ret)
+        |- xdr_int(op_errno)
+         \ xdr_pointer(rsp->prog)
+         .\ xdr_gf_prog_detail(rsp->prog[])
+         ||  /* recurse through all rsp->prog */
+         ||- xdr_string(progname)
+         ||- xdr_u_quad_t(prognum)
+         ||- xdr_u_quad_t(progver)
+         '/
+         /
+
        L<--size--> <---xid---> <direction> <cb_rpcvers>
 0000   80 00 01 1c 00 00 00 01 00 00 00 01 00 00 00 00  ................
        <-cb_prog-> <-cb_vers-> <-cb_proc-> <oa_flavor>
 0010   00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-       <oa_length> <--flags--> <-str_len-> <---key-----
+       <oa_length> <--gfs_id-> <--op_ret-> <-op_errno>
 0020   00 00 00 00 00 00 00 00 00 00 00 16 00 00 00 01  ................
+       <-str_len-> <------"GF-DUMP"------> <-prognum->
 0030   00 00 00 07 47 46 2d 44 55 4d 50 00 00 00 00 00  ....GF-DUMP.....
-      -key->
+       <-progver-> <?????????????????????????????????>
 0040   07 5b b8 6d 00 00 00 00 00 00 00 01 00 00 00 01  .[.m............
+       <-str_len-> <-------------"GlusterD0.0.1"------
 0050   00 00 00 0d 47 6c 75 73 74 65 72 44 30 2e 30 2e  ....GlusterD0.0.
+       ----------> <-prognum-> <-progver-> <??????????
 0060   31 00 00 00 00 00 00 00 00 13 d0 01 00 00 00 00  1...............
+       ??????????????????????> <-str_len-> <----------
 0070   00 00 00 01 00 00 00 01 00 00 00 10 47 6c 75 73  ............Glus
+       ----"GlusterD svc cli"------------>
 0080   74 65 72 44 20 73 76 63 20 63 6c 69 00 00 00 00  terD svc cli....
 0090   00 12 e5 bf 00 00 00 00 00 00 00 01 00 00 00 01  ................
 00a0   00 00 00 11 47 6c 75 73 74 65 72 44 20 73 76 63  ....GlusterD svc
@@ -543,21 +576,21 @@ cb_proc: 0 (no callback)
 oa_flavor: 0
 oa_length: 0
 
-is this wrong?
-		flags (int): 0
-		key (string): len=0x16=22
-					  00 00 00 01 00 00 00 07 47 46 2d 44 55 4d 50 00 00 00 00 00 07 5b
+gfs_id (quadrup): 0
+op_ret (int): 0x16 = 22 (Invalid argument)
+op_errno (int): 0x1 (Operation not permitted)
 
+progname (string): len=0x7=7 -> this is rounded to 8 (0-padded on the end)
+                   GF-DUMP
+prognum (quadruple): 0
+progver (quadruple): 0x07 0x5b 0xb5 0x6d = 123450733
 
-Later in the handshake? This does not make sense...
-		gfs_id (quadrup): 0
-		op_ret (int): 0x16
-		op_errno (int): 0x1
+What would these be?
+<?????????????????????????????????>
+00 00 00 00 00 00 00 01 00 00 00 01
 
-		progname (string): len=0x7=7
-		                   GF-DUMP
-		prognum (quadruple): 0
-		progver (quadruple): 0x00 0x07 0x5b 0xb5
+<?????????????????????????????????> 
+00 00 00 00 00 00 00 01 00 00 00 01
 
 
 nodeA -> nodeB
