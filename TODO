@@ -1,0 +1,6 @@
+Unordered list of items that need to be done
+
+- functions are not in a logical order, it can be ordered nicer
+- declarations of variables are not only done at the beginning of the function
+- xdr_*() conversions need error checking
+- all FIXME statements need a better solution
