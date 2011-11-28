@@ -124,22 +124,6 @@ bool_t gluster_xdr_dump_reply(XDR *xdr, gluster_pkt_hdr_t *hdr)
 	DEBUG("op_ret: %d\n", op_ret);
 	DEBUG("op_errno: %d (%s)\n", op_errno, strerror(op_errno));
 
-#if 0
-	uint32_t unknown;
-	xdr_uint32_t(xdr, &unknown);
-	FIXME("Reading 4 bytes of unknown...\n");
-
-	uint32_t prognum;
-	xdr_uint32_t(xdr, &prognum);
-
-	uint32_t progver;
-	xdr_uint32_t(xdr, &progver);
-
-	DEBUG("progname: %s\n", progname);
-	DEBUG("prognum: %d\n", prognum);
-	DEBUG("progver: %d\n", progver);
-#endif
-
 	while (hdr->size > xdr_getpos(xdr)) {
 		char *progname = NULL;
 		xdr_string(xdr, &progname, RPCSVC_NAME_MAX);
@@ -149,21 +133,6 @@ bool_t gluster_xdr_dump_reply(XDR *xdr, gluster_pkt_hdr_t *hdr)
 		gluster_decode_call_rpchdr1(xdr, &rpc_hdr);
 	}
 
-#if 0
-	gluster_prog_t *prog = gluster_get_prog(prognum, progver);
-	if (prog) {
-		DEBUG("procname: %s\n", prog->progname);
-
-		gluster_proc_t *proc = gluster_get_proc(prog, procnum);
-		if (proc){
-			DEBUG("procname: %s\n", proc->procname);
-			if (proc->xdr_decode)
-				proc->xdr_decode(xdr);
-		}
-	} else {
-		DEBUG("NIY: prognum=%d, progver=%d\n", prognum, progver);
-	}
-#endif
 	return TRUE;
 }
 
@@ -246,32 +215,6 @@ void gluster_decode_call(XDR *xdr, gluster_pkt_hdr_t *hdr)
 	} else {
 		return;
 	}
-
-//	/* authentication type */
-//	uint32_t oa_flavor;
-//	xdr_uint32_t(&xdr, &oa_flavor);
-//
-//	/* authentication data length */
-//	uint32_t oa_length;
-//	xdr_uint32_t(&xdr, &oa_length);
-//
-//	/* authentication data */
-//	char *oa_data = NULL; // malloc(oa_length);
-//	xdr_string(&xdr, &oa_data, oa_length);
-//
-//	/* FIXME: gfs_id, sure? */
-//#define GFS_ID_SIZE 16
-//	char *gfs_id = NULL; //malloc(GFS_ID_SIZE);
-//	xdr_string(&xdr, &gfs_id, GFS_ID_SIZE);
-//
-//	DEBUG("cb_proc: %d\n", cb_proc);
-//	DEBUG("oa_flavor: %d\n", oa_flavor);
-//	DEBUG("oa_length: %d\n", oa_length);
-//	DEBUG("oa_data: %d\n", oa_data);
-//
-//cleanup:
-//	xdr_free((xdrproc_t) xdr_string, (char*) &oa_data);
-//	xdr_free((xdrproc_t) xdr_string, (char*) &gfs_id);
 }
 
 void gluster_decode_reply(XDR *xdr, gluster_pkt_hdr_t *hdr)
@@ -431,32 +374,3 @@ static gluster_prog_t gluster_progs[] = {
 		.nr_procs  = 0,
 	},
 };
-
-/* from rpc/rpc-lib/src/rpcsvc.h
-311 #define RPCSVC_NAME_MAX            32
-315 typedef struct rpcsvc_actor_desc {
-316         char                    procname[RPCSVC_NAME_MAX];
-317         int                     procnum;
-318         rpcsvc_actor            actor;
-328         rpcsvc_vector_actor     vector_actor;
-329         rpcsvc_vector_sizer     vector_sizer;
-330 
-331 } rpcsvc_actor_t;
-*/
-
-/* from rpc/rpc-lib/src/rpcsvc.c
-2380 rpcsvc_actor_t gluster_dump_actors[] = {
-2381         [GF_DUMP_NULL] = {"NULL", GF_DUMP_NULL, NULL, NULL, NULL },
-2382         [GF_DUMP_DUMP] = {"DUMP", GF_DUMP_DUMP, rpcsvc_dump, NULL, NULL },
-2383         [GF_DUMP_MAXVALUE] = {"MAXVALUE", GF_DUMP_MAXVALUE, NULL, NULL, NULL },
-2384 };
-2385 
-2386 
-2387 struct rpcsvc_program gluster_dump_prog = {
-2388         .progname  = "GF-DUMP",
-2389         .prognum   = GLUSTER_DUMP_PROGRAM,
-2390         .progver   = GLUSTER_DUMP_VERSION,
-2391         .actors    = gluster_dump_actors,
-2392         .numactors = 2,
-2393 };
-*/
