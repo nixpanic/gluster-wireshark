@@ -277,39 +277,39 @@ cleanup:
 }
 
 
-#define ADD_PROC_NAME_NUM(name, num)		.procname = name, .procnum = num,
-#define ADD_PROC_NAME_NUM_XDR(name, num, xdr)	.procname = name, .procnum = num, .xdr_decode = xdr,
+#define ADD_PROC(name, num)			.procname = name, .procnum = num,
+#define ADD_PROC_XDR(name, num, call, reply)	.procname = name, .procnum = num, .xdr_call = call, .xdr_reply = reply,
 
 /* xlators/mgmt/glusterd/src/glusterd-rpc-ops.c */
-static gluster_prog_proc_t gluster_mgmt_procs[] = {
-	{ ADD_PROC_NAME_NUM("NULL", GLUSTERD_MGMT_NULL) },
-	{ ADD_PROC_NAME_NUM("PROBE_QUERY", GLUSTERD_MGMT_PROBE_QUERY) },
-	{ ADD_PROC_NAME_NUM("FRIEND_ADD", GLUSTERD_MGMT_FRIEND_ADD) },
-	{ ADD_PROC_NAME_NUM("CLUSTER_LOCK", GLUSTERD_MGMT_CLUSTER_LOCK) },
-	{ ADD_PROC_NAME_NUM("CLUSTER_UNLOCK", GLUSTERD_MGMT_CLUSTER_UNLOCK) },
-	{ ADD_PROC_NAME_NUM("STAGE_OP", GLUSTERD_MGMT_STAGE_OP) },
-	{ ADD_PROC_NAME_NUM("COMMIT_OP", GLUSTERD_MGMT_COMMIT_OP) },
-	{ ADD_PROC_NAME_NUM("FRIEND_REMOVE", GLUSTERD_MGMT_FRIEND_REMOVE) },
-	{ ADD_PROC_NAME_NUM("FRIEND_UPDATE", GLUSTERD_MGMT_FRIEND_UPDATE) },
+static gluster_proc_t gluster_mgmt_procs[] = {
+	{ ADD_PROC("NULL", GLUSTERD_MGMT_NULL) },
+	{ ADD_PROC("PROBE_QUERY", GLUSTERD_MGMT_PROBE_QUERY) },
+	{ ADD_PROC("FRIEND_ADD", GLUSTERD_MGMT_FRIEND_ADD) },
+	{ ADD_PROC("CLUSTER_LOCK", GLUSTERD_MGMT_CLUSTER_LOCK) },
+	{ ADD_PROC("CLUSTER_UNLOCK", GLUSTERD_MGMT_CLUSTER_UNLOCK) },
+	{ ADD_PROC("STAGE_OP", GLUSTERD_MGMT_STAGE_OP) },
+	{ ADD_PROC("COMMIT_OP", GLUSTERD_MGMT_COMMIT_OP) },
+	{ ADD_PROC("FRIEND_REMOVE", GLUSTERD_MGMT_FRIEND_REMOVE) },
+	{ ADD_PROC("FRIEND_UPDATE", GLUSTERD_MGMT_FRIEND_UPDATE) },
 };
 
-static gluster_prog_proc_t gluster_glusterfs_mgmt_procs[] = {
-	{ ADD_PROC_NAME_NUM("NULL", GD_MGMT_NULL) },
-	{ ADD_PROC_NAME_NUM("BRICK_OP", GD_MGMT_BRICK_OP) },
+static gluster_proc_t gluster_glusterfs_mgmt_procs[] = {
+	{ ADD_PROC("NULL", GD_MGMT_NULL) },
+	{ ADD_PROC("BRICK_OP", GD_MGMT_BRICK_OP) },
 };
 
 /* procedures for GLUSTER_DUMP_PROGRAM */
-static gluster_prog_proc_t gluster_dump_procs[] = {
-	{ ADD_PROC_NAME_NUM("NULL", GF_DUMP_NULL) },
-	{ ADD_PROC_NAME_NUM_XDR("DUMP", GF_DUMP_DUMP, gluster_dump_dump_xdr) },
+static gluster_proc_t gluster_dump_procs[] = {
+	{ ADD_PROC("NULL", GF_DUMP_NULL) },
+	{ ADD_PROC_XDR("DUMP", GF_DUMP_DUMP, gluster_xdr_dump_call, gluster_xdr_dump_reply) },
 };
 
 /* procedures for GLUSTER_HNDSK_PROGRAM */
-static gluster_prog_proc_t gluster_hndsk_procs[] = {
-	{ ADD_PROC_NAME_NUM("NULL", GF_HNDSK_NULL) },
-	{ ADD_PROC_NAME_NUM("DUMP", GF_HNDSK_SETVOLUME) },
-	{ ADD_PROC_NAME_NUM("GETSPEC", GF_HNDSK_GETSPEC) },
-	{ ADD_PROC_NAME_NUM("PING", GF_HNDSK_PING) },
+static gluster_proc_t gluster_hndsk_procs[] = {
+	{ ADD_PROC("NULL", GF_HNDSK_NULL) },
+	{ ADD_PROC("DUMP", GF_HNDSK_SETVOLUME) },
+	{ ADD_PROC("GETSPEC", GF_HNDSK_GETSPEC) },
+	{ ADD_PROC("PING", GF_HNDSK_PING) },
 };
 
 /* mapping all programs, versions to their procedures */
