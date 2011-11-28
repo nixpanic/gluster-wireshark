@@ -129,8 +129,12 @@ bool_t gluster_xdr_dump_reply(XDR *xdr, gluster_pkt_hdr_t *hdr)
 		xdr_string(xdr, &progname, RPCSVC_NAME_MAX);
 		DEBUG("progname: %s\n", progname);
 
-		gluster_rpc_hdr_t rpc_hdr;
-		gluster_decode_call_rpchdr1(xdr, &rpc_hdr);
+		FIXME("Decoding 4 bytes of <unknown>\n");
+		uint32_t unknown;
+		xdr_uint32_t(xdr, &unknown);
+		xdr_uint32_t(xdr, &unknown);
+		xdr_uint32_t(xdr, &unknown);
+		xdr_uint32_t(xdr, &unknown);
 	}
 
 	return TRUE;
