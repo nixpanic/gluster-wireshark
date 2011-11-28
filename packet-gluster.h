@@ -26,7 +26,8 @@
 #define __PACKET_GLUSTER_H__
 
 /* from rpc/rpc-lib/src/rpcsvc.h */
-#define RPCSVC_NAME_MAX         32
+#define RPCSVC_NAME_MAX		32
+#define RPCSVC_MAX_AUTH_BYTES	400
 
 /* this comes from rpc/rpc-lib/src/protocol-common.h
  * TODO: use libglusterfs-devel
@@ -177,6 +178,9 @@ enum gluster_prognums {
 	NFS_PROGRAM            = 100003,
 };
 
+/* if searching for a prognum/progversion, this matches any version */
+#define GLUSTER_PROG_VERSION_ANY	-1
+
 /* rpc/rpc-lib/src/xdr-common.h:gf_dump_procnum
  * gf_dump_procnum does not contain a 0-value */
 enum gluster_prog_dump_procs {
@@ -215,30 +219,39 @@ enum gluster_prog_hndsk_procs {
 	GF_HNDSK_MAXVALUE,
 };
 
-struct gluster_prog_proc {
+struct gluster_pkt_hdr {
+	uint32_t size;				/* size of the packet */
+	bool_t last;				/* marker for the last packet */
+	uint32_t xid;				/* session id */
+	enum gluster_msg_direction direction;
+};
+typedef struct gluster_pkt_hdr gluster_pkt_hdr_t;
+
+struct gluster_rpc_hdr {
+	uint32_t rpcver;
+	uint32_t prognum;
+	uint32_t progver;
+	uint32_t procnum;
+};
+typedef struct gluster_rpc_hdr gluster_rpc_hdr_t;
+
+struct gluster_proc {
 	const char* procname;           /* user readable description */
 	uint32_t procnum;               /* procedure number */
 
-	bool_t (*xdr_decode)(XDR *xdr); /* xdr decoding */
+	bool_t (*xdr_call)(XDR *xdr, gluster_pkt_hdr_t *hdr);	/* xdr decoding of a call */
+	bool_t (*xdr_reply)(XDR *xdr, gluster_pkt_hdr_t *hdr);	/* xdr decoding of a reply */
 };
-typedef struct gluster_prog_proc gluster_prog_proc_t;
+typedef struct gluster_proc gluster_proc_t;
 
 struct gluster_prog {
 	const char progname[RPCSVC_NAME_MAX];  /* user readable description */
 	uint32_t prognum;                      /* program numner */
 	uint32_t progver;                      /* program version */
 
-	gluster_prog_proc_t *procs;            /* procedures of a program */
+	gluster_proc_t *procs;            /* procedures of a program */
 	unsigned int nr_procs;                 /* number of elements in *procs */
 };
 typedef struct gluster_prog gluster_prog_t;
-
-struct rpc_hdr {
-	uint32_t rpcver;
-	uint32_t prognum;
-	uint32_t progver;
-	uint32_t procnum;
-};
-typedef struct rpc_hdr rpc_hdr_t;
 
 #endif /* __PACKET_GLUSTER_H__ */

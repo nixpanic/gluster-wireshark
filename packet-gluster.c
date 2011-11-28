@@ -23,36 +23,72 @@
  */
 
 #include <rpc/xdr.h>
+#include <string.h> /* strerror() */
 
 #include "packet-gluster.h"
 
-#define DEBUG	printf
+/* some debugging functions for temporary use */
+#define DEBUG			printf
+#define FIXME(fmt, msg...)	DEBUG("FIXME: " fmt, ##msg)
+#define GETPOS(xdr)		DEBUG("xdr_pos: %d\n", xdr_getpos(xdr))
 
 /* the main RPC decoding structure, defined at the end of this file */
 static gluster_prog_t gluster_progs[];
+
+gluster_prog_t* gluster_get_prog(uint32_t prognum, uint32_t progver);
+
+const char* gluster_get_progname(uint32_t prognum, uint32_t progver)
+{
+	gluster_prog_t *prog = NULL;
+
+	if (progver != GLUSTER_PROG_VERSION_ANY)
+		prog = gluster_get_prog(prognum, progver);
+
+	if (!prog || GLUSTER_PROG_VERSION_ANY) {
+		int i = 0;
+
+		while (gluster_progs[i].prognum != -1) {
+			if (gluster_progs[i].prognum == prognum)
+				prog = &gluster_progs[i];
+
+			i++;
+		}
+	}
+
+	if (prog)
+		return prog->progname;
+
+	DEBUG("FIXME: not implemented yet (prognum=%d, progver=%d)\n", prognum, progver);
+
+	return NULL;
+}
+
+/* rpc/rpc-transport/socket/src/socket.c:SP_STATE_READ_RPCHDR1 */
+void gluster_decode_call_rpchdr1(XDR *xdr, gluster_rpc_hdr_t *rpchdr)
+{
+	xdr_uint32_t(xdr, &rpchdr->rpcver);
+	xdr_uint32_t(xdr, &rpchdr->prognum);
+	xdr_uint32_t(xdr, &rpchdr->progver);
+	xdr_uint32_t(xdr, &rpchdr->procnum);
+
+	DEBUG("rpcver: %d\n", rpchdr->rpcver);
+	DEBUG("prognum: %d (%s)\n", rpchdr->prognum, gluster_get_progname(rpchdr->prognum, rpchdr->progver));
+	DEBUG("progver: %d\n", rpchdr->progver);
+	DEBUG("procnum: %d\n", rpchdr->procnum);
+
+}
 
 bool_t gluster_decode_oa(XDR *xdr)
 {
 	uint32_t oa_flavor;
 	xdr_uint32_t(xdr, &oa_flavor);
 
-	uint32_t oa_length;
-	xdr_uint32_t(xdr, &oa_length);
-
-	uint32_t *oa_data = malloc(sizeof(uint32_t) * oa_length);
-	uint32_t units_read = 0;
-	/* FIXME: use xdr_bytes() instead? */
-	while (units_read < (oa_length / BYTES_PER_XDR_UNIT)) {
-		if (!xdr_uint32_t(xdr, oa_data + units_read)) {
-			DEBUG("FAIL: could only read %d/%d \n", units_read, (oa_length / BYTES_PER_XDR_UNIT));
-			return FALSE;
-		}
-		units_read++;
-	}
+	char *oa_data = NULL;
+	xdr_string(xdr, &oa_data, RPCSVC_MAX_AUTH_BYTES);
 
 	DEBUG("oa_flavor: %d\n", oa_flavor);
-	DEBUG("oa_length: %d\n", oa_length);
-	DEBUG("oa_data: (%d units of %d bytes read)\n", units_read, BYTES_PER_XDR_UNIT);
+	DEBUG("oa_length: %ld\n", strlen(oa_data));
+	FIXME("oa_data is not decoded yet\n");
 
 	free(oa_data);
 
@@ -71,9 +107,68 @@ bool_t gluster_decode_oa(XDR *xdr)
 109                  return FALSE;
 110         return TRUE;
 */
+bool_t gluster_xdr_dump_reply(XDR *xdr, gluster_pkt_hdr_t *hdr)
+{
+	gluster_decode_oa(xdr);
+
+	uint32_t gfs_id;
+	xdr_uint32_t(xdr, &gfs_id);
+
+	uint32_t op_ret;
+	xdr_uint32_t(xdr, &op_ret);
+
+	uint32_t op_errno;
+	xdr_uint32_t(xdr, &op_errno);
+
+	DEBUG("gfs_id: 0x%x\n", gfs_id);
+	DEBUG("op_ret: %d\n", op_ret);
+	DEBUG("op_errno: %d (%s)\n", op_errno, strerror(op_errno));
+
+#if 0
+	uint32_t unknown;
+	xdr_uint32_t(xdr, &unknown);
+	FIXME("Reading 4 bytes of unknown...\n");
+
+	uint32_t prognum;
+	xdr_uint32_t(xdr, &prognum);
+
+	uint32_t progver;
+	xdr_uint32_t(xdr, &progver);
+
+	DEBUG("progname: %s\n", progname);
+	DEBUG("prognum: %d\n", prognum);
+	DEBUG("progver: %d\n", progver);
+#endif
+
+	while (hdr->size > xdr_getpos(xdr)) {
+		char *progname = NULL;
+		xdr_string(xdr, &progname, RPCSVC_NAME_MAX);
+		DEBUG("progname: %s\n", progname);
+
+		gluster_rpc_hdr_t rpc_hdr;
+		gluster_decode_call_rpchdr1(xdr, &rpc_hdr);
+	}
+
+#if 0
+	gluster_prog_t *prog = gluster_get_prog(prognum, progver);
+	if (prog) {
+		DEBUG("procname: %s\n", prog->progname);
+
+		gluster_proc_t *proc = gluster_get_proc(prog, procnum);
+		if (proc){
+			DEBUG("procname: %s\n", proc->procname);
+			if (proc->xdr_decode)
+				proc->xdr_decode(xdr);
+		}
+	} else {
+		DEBUG("NIY: prognum=%d, progver=%d\n", prognum, progver);
+	}
+#endif
+	return TRUE;
+}
 
 /* DUMP request */
-bool_t gluster_dump_dump_xdr(XDR *xdr)
+bool_t gluster_xdr_dump_call(XDR *xdr, gluster_pkt_hdr_t *hdr)
 {
 	u_quad_t gfs_id;
 	xdr_u_quad_t(xdr, &gfs_id);
@@ -99,7 +194,7 @@ gluster_prog_t* gluster_get_prog(uint32_t prognum, uint32_t progver)
 	return NULL;
 }
 
-gluster_prog_proc_t* gluster_get_proc(gluster_prog_t *prog, uint32_t procnum)
+gluster_proc_t* gluster_get_proc(gluster_prog_t *prog, uint32_t procnum)
 {
 	int i;
 
@@ -112,24 +207,25 @@ gluster_prog_proc_t* gluster_get_proc(gluster_prog_t *prog, uint32_t procnum)
 	return NULL;
 }
 
-/* rpc/rpc-transport/socket/src/socket.c:SP_STATE_READ_RPCHDR1 */
-void gluster_decode_call_rpchdr1(XDR *xdr, rpc_hdr_t *rpchdr)
+bool_t gluster_decode_proc(XDR *xdr, gluster_pkt_hdr_t *hdr, gluster_proc_t *proc)
 {
-	xdr_uint32_t(xdr, &rpchdr->rpcver);
-	xdr_uint32_t(xdr, &rpchdr->prognum);
-	xdr_uint32_t(xdr, &rpchdr->progver);
-	xdr_uint32_t(xdr, &rpchdr->procnum);
+	switch (hdr->direction) {
+		case CALL:
+			if (proc->xdr_call)
+				return proc->xdr_call(xdr, hdr);
+		case REPLY:
+			if (proc->xdr_reply)
+				return proc->xdr_reply(xdr, hdr);
+		default:
+			FIXME("Direction %d not known\n", hdr->direction);
+	}
 
-	DEBUG("rpcver: %d\n", rpchdr->rpcver);
-	DEBUG("prognum: %d\n", rpchdr->prognum);
-	DEBUG("progver: %d\n", rpchdr->progver);
-	DEBUG("procnum: %d\n", rpchdr->procnum);
-
+	return TRUE;
 }
 
-void gluster_decode_call(XDR *xdr)
+void gluster_decode_call(XDR *xdr, gluster_pkt_hdr_t *hdr)
 {
-	rpc_hdr_t rpchdr;
+	gluster_rpc_hdr_t rpchdr;
 	gluster_decode_call_rpchdr1(xdr, &rpchdr);
 
 	/* oa_cred  */
@@ -142,11 +238,10 @@ void gluster_decode_call(XDR *xdr)
 	if (prog) {
 		DEBUG("procname: %s\n", prog->progname);
 
-		gluster_prog_proc_t *proc = gluster_get_proc(prog, rpchdr.procnum);
+		gluster_proc_t *proc = gluster_get_proc(prog, rpchdr.procnum);
 		if (proc){
 			DEBUG("procname: %s\n", proc->procname);
-			if (proc->xdr_decode)
-				proc->xdr_decode(xdr);
+			gluster_decode_proc(xdr, hdr, proc);
 		}
 	} else {
 		return;
@@ -179,7 +274,7 @@ void gluster_decode_call(XDR *xdr)
 //	xdr_free((xdrproc_t) xdr_string, (char*) &gfs_id);
 }
 
-void gluster_decode_reply(XDR *xdr)
+void gluster_decode_reply(XDR *xdr, gluster_pkt_hdr_t *hdr)
 {
 	uint32_t cb_rpcver;
 	xdr_uint32_t(xdr, &cb_rpcver);
@@ -198,26 +293,11 @@ void gluster_decode_reply(XDR *xdr)
 	DEBUG("cb_progver: %d\n", cb_progver);
 	DEBUG("cb_procnum: %d\n", cb_procnum);
 
-	gluster_decode_oa(xdr);
-
-	/* data is prognum/progver/procnum dependent */
-
-//	gluster_decode_call_rpchdr1(xdr);
-#if 0
-	gluster_prog_t *prog = gluster_get_prog(prognum, progver);
-	if (prog) {
-		DEBUG("procname: %s\n", prog->progname);
-
-		gluster_prog_proc_t *proc = gluster_get_proc(prog, procnum);
-		if (proc){
-			DEBUG("procname: %s\n", proc->procname);
-			if (proc->xdr_decode)
-				proc->xdr_decode(xdr);
-		}
-	} else {
-		DEBUG("NIY: prognum=%d, progver=%d\n", prognum, progver);
-	}
-#endif
+	/* data is depends on the prognum/progver/procnum of the xid */
+	FIXME("Dissecting as GLUSTER_DUMP_PROGRAM reply...\n");
+	gluster_prog_t *prog = gluster_get_prog(123451501, 1);
+	gluster_proc_t *proc = gluster_get_proc(prog, 1);
+	gluster_decode_proc(xdr, hdr, proc);
 }
 
 #define GLUSTER_HEADER_LAST_PKT		0x80000000U
@@ -236,39 +316,41 @@ void gluster_decode_packet(void *packet, size_t size)
 	XDR xdr;
 	xdrmem_create(&xdr, packet, size, XDR_DECODE);
 
+	gluster_pkt_hdr_t hdr;
+
 	/* the first 32 bits is the header */
 	uint32_t header;
 	xdr_uint32_t(&xdr, &header);
 
-	bool_t is_last_pkt = gluster_is_last_pkt(header);
-	uint32_t payload_size = gluster_payload_size(header);
+	hdr.last = gluster_is_last_pkt(header);
+	hdr.size = gluster_payload_size(header);
 
 	/* transaction id */
-	uint32_t xid;
-	xdr_uint32_t(&xdr, &xid);
+	xdr_uint32_t(&xdr, &hdr.xid);
 
 	/* direction (call=0, reply=1) */
-	uint32_t direction;
-	xdr_uint32_t(&xdr, &direction);
+	xdr_uint32_t(&xdr, &hdr.direction);
 
-	DEBUG("is_last_pkt: %d\n", is_last_pkt);
-	DEBUG("payload_size: %d\n", payload_size);
-	DEBUG("xid: %d\n", xid);
-	DEBUG("direction: %d\n", direction);
+	DEBUG("is_last_pkt: %d\n", hdr.last);
+	DEBUG("payload_size: %d\n", hdr.size);
+	DEBUG("xid: %d\n", hdr.xid);
+	DEBUG("direction: %d\n", hdr.direction);
 
-	switch (direction) {
+	switch (hdr.direction) {
 		case CALL:
-			gluster_decode_call(&xdr);
+			gluster_decode_call(&xdr, &hdr);
 			break;
 		case REPLY:
-			gluster_decode_reply(&xdr);
+			gluster_decode_reply(&xdr, &hdr);
 			break;
 		case UNIVERSAL_ANSWER:
 			/* gluster < 3.0 protocol */
-			DEBUG("FIXME: this is really unexpected - old protocol?\n");
+			FIXME("this is really unexpected - old protocol?\n");
 			break;
 		default:
 			/* FIXME: bail out? */
+			FIXME("this is really unexpected - new protocol?\n");
+			break;
 			goto cleanup;
 	}
 
