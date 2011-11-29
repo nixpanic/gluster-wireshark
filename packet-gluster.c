@@ -250,8 +250,14 @@ void gluster_decode_reply(XDR *xdr, gluster_pkt_hdr_t *hdr)
 	DEBUG("cb_procnum: %d\n", cb_procnum);
 
 	/* data is depends on the prognum/progver/procnum of the xid */
+#if 0
 	FIXME("Dissecting as GLUSTER_DUMP_PROGRAM reply...\n");
 	gluster_prog_t *prog = gluster_get_prog(123451501, 1);
+	gluster_proc_t *proc = gluster_get_proc(prog, 1);
+	gluster_decode_proc(xdr, hdr, proc);
+#endif
+	FIXME("Dissecting as PROBE_QUERY reply...\n");
+	gluster_prog_t *prog = gluster_get_prog(1238433, 1);
 	gluster_proc_t *proc = gluster_get_proc(prog, 1);
 	gluster_decode_proc(xdr, hdr, proc);
 }
