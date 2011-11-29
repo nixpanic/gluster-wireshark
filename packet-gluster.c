@@ -129,11 +129,16 @@ bool_t gluster_xdr_dump_reply(XDR *xdr, gluster_pkt_hdr_t *hdr)
 		xdr_string(xdr, &progname, RPCSVC_NAME_MAX);
 		DEBUG("progname: %s\n", progname);
 
-		FIXME("Decoding 4 bytes of <unknown>\n");
+		u_quad_t prognum;
+		xdr_u_quad_t(xdr, &prognum);
+		DEBUG("prognum: %ld\n", prognum);
+
+		u_quad_t progver;
+		xdr_u_quad_t(xdr, &progver);
+		DEBUG("progver: %ld\n", progver);
+
+		FIXME("Decoding $some bytes of <unknown>\n");
 		uint32_t unknown;
-		xdr_uint32_t(xdr, &unknown);
-		xdr_uint32_t(xdr, &unknown);
-		xdr_uint32_t(xdr, &unknown);
 		xdr_uint32_t(xdr, &unknown);
 	}
 
