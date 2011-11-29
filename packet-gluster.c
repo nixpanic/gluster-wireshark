@@ -156,6 +156,16 @@ bool_t gluster_xdr_dump_call(XDR *xdr, gluster_pkt_hdr_t *hdr)
 	return TRUE;
 }
 
+bool_t gluster_xdr_probe_reply(XDR *xdr, gluster_pkt_hdr_t *hdr)
+{
+	return FALSE;
+}
+
+bool_t gluster_xdr_probe_call(XDR *xdr, gluster_pkt_hdr_t *hdr)
+{
+	return FALSE;
+}
+
 gluster_prog_t* gluster_get_prog(uint32_t prognum, uint32_t progver)
 {
 	int i = 0;
@@ -327,7 +337,7 @@ cleanup:
 /* xlators/mgmt/glusterd/src/glusterd-rpc-ops.c */
 static gluster_proc_t gluster_mgmt_procs[] = {
 	{ ADD_PROC("NULL", GLUSTERD_MGMT_NULL) },
-	{ ADD_PROC("PROBE_QUERY", GLUSTERD_MGMT_PROBE_QUERY) },
+	{ ADD_PROC_XDR("PROBE_QUERY", GLUSTERD_MGMT_PROBE_QUERY, gluster_xdr_probe_call, gluster_xdr_probe_reply) },
 	{ ADD_PROC("FRIEND_ADD", GLUSTERD_MGMT_FRIEND_ADD) },
 	{ ADD_PROC("CLUSTER_LOCK", GLUSTERD_MGMT_CLUSTER_LOCK) },
 	{ ADD_PROC("CLUSTER_UNLOCK", GLUSTERD_MGMT_CLUSTER_UNLOCK) },
