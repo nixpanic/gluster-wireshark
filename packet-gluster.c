@@ -191,14 +191,18 @@ bool_t gluster_decode_proc(XDR *xdr, gluster_pkt_hdr_t *hdr, gluster_proc_t *pro
 		case CALL:
 			if (proc->xdr_call)
 				return proc->xdr_call(xdr, hdr);
+			break;
 		case REPLY:
 			if (proc->xdr_reply)
 				return proc->xdr_reply(xdr, hdr);
+			break;
 		default:
 			FIXME("Direction %d not known\n", hdr->direction);
+			return FALSE;
 	}
 
-	return TRUE;
+	FIXME("No idea how to decode this, need to implement xdr_call() and xdr_reply()\n");
+	return FALSE;
 }
 
 void gluster_decode_call(XDR *xdr, gluster_pkt_hdr_t *hdr)
