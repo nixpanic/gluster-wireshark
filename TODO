@@ -4,3 +4,4 @@ Unordered list of items that need to be done
 - declarations of variables are not only done at the beginning of the function
 - xdr_*() conversions need error checking
 - all FIXME statements need a better solution
+- reply on GLUSTER_DUMP_PROGRAM/GF_DUMP_DUMP contains 4 bytes of <unknown> (see RFC)
