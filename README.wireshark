@@ -1,0 +1,31 @@
+Gluster Dissector for Wireshark
+
+1) get the Gluster patches for Wireshark
+   - wireshark-1_6_4-make-gluster.patch (for Wireshark 1.6.4, current version)
+   - wireshark-1_4_10-make-gluster.patch (for Wireshark 1.4.10, RHEL6 version)
+   - packet-gluster.patch (version independent, for all I know)
+
+2) get the Wireshark sources (alternatively get version 1.4)
+   $ svn co http://anonsvn.wireshark.org/wireshark/trunk-1.6/ wireshark-1.6
+   $ cd wireshark-1.6
+
+3) apply the patches
+   $ patch -p1 < packet-gluster.patch
+   $ patch -p1 < wireshark-1_6_4-make-gluster.patch
+
+4) compile the sources
+   $ ./configure
+   $ make
+
+5) install the new Wireshark with (some) support for Gluster
+   $ sudo make install
+
+There are more hints in the README and doc/README.developer in the Wireshark
+sources.
+
+The main dissector files for Gluster are added with the packet-gluster.patch
+and are:
+ - epan/dissectors/packet-gluster.c
+ - epan/dissectors/packet-gluster.h
+
+Author: Niels de Vos <ndevos@redhat.com>

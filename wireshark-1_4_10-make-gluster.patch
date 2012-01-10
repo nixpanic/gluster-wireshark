@@ -1,0 +1,32 @@
+diff --git a/epan/CMakeLists.txt b/epan/CMakeLists.txt
+index 67d7082..dbe14d8 100644
+--- a/epan/CMakeLists.txt
++++ b/epan/CMakeLists.txt
+@@ -561,6 +561,7 @@ set(DISSECTOR_SRC
+ 	dissectors/packet-giop.c
+ 	dissectors/packet-git.c
+ 	dissectors/packet-glbp.c
++	dissectors/packet-gluster.c
+ 	dissectors/packet-gmhdr.c
+ 	dissectors/packet-gmrp.c
+ 	dissectors/packet-gnutella.c
+diff --git a/epan/dissectors/Makefile.common b/epan/dissectors/Makefile.common
+index 8cfc1a7..446fa16 100644
+--- a/epan/dissectors/Makefile.common
++++ b/epan/dissectors/Makefile.common
+@@ -474,6 +474,7 @@ DISSECTOR_SRC = \
+ 	packet-giop.c		\
+ 	packet-git.c		\
+ 	packet-glbp.c		\
++	packet-gluster.c		\
+ 	packet-gmhdr.c		\
+ 	packet-gmrp.c		\
+ 	packet-gnutella.c	\
+@@ -1085,6 +1086,7 @@ DISSECTOR_INCLUDES =	\
+ 	packet-frame.h	\
+ 	packet-ftam.h	\
+ 	packet-giop.h	\
++	packet-gluster.h	\
+ 	packet-gnm.h	\
+ 	packet-gnutella.h	\
+ 	packet-gre.h	\
