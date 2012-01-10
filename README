@@ -13,9 +13,12 @@ protocol.
 Planned Development Stages
 
 0) read/understand Gluster communication
+   DONE: unstand the gluster sources
 1) parse Gluster RPC packets on the commandline
+   DONE: see the history of this git repository
 2) move the dissector into Wireshark format
+   WIP: see README.wireshark
 3) submit to upstream Wireshark
-
+   TODO: update https://bugs.wireshark.org/bugzilla/show_bug.cgi?id=5773
 
 Author: Niels de Vos <ndevos@redhat.com>
