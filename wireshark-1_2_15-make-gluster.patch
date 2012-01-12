@@ -1,0 +1,20 @@
+diff --git a/epan/dissectors/Makefile.common b/epan/dissectors/Makefile.common
+index 21fd8bd..131e2cc 100644
+--- a/epan/dissectors/Makefile.common
++++ b/epan/dissectors/Makefile.common
+@@ -455,6 +455,7 @@ DISSECTOR_SRC = \
+ 	packet-gdsdb.c		\
+ 	packet-gift.c		\
+ 	packet-giop.c		\
++	packet-gluster.c	\
+ 	packet-gmrp.c		\
+ 	packet-gnutella.c	\
+ 	packet-gpef.c		\
+@@ -1036,6 +1037,7 @@ DISSECTOR_INCLUDES =	\
+ 	packet-frame.h	\
+ 	packet-ftam.h	\
+ 	packet-giop.h	\
++	packet-gluster.h	\
+ 	packet-gnm.h	\
+ 	packet-gnutella.h	\
+ 	packet-gre.h	\
