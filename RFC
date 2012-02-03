@@ -759,3 +759,59 @@ nodeA -> nodeB
 0060   31 37 32 2e 33 31 2e 31 32 32 2e 31 30 32 00 00  172.31.122.102..
 0070   00 00 00 00 00 00 00 00 00 00 00 00              ............
 
+dict parsing
+- 8 items:
+
+      <volfile-checksum                             
+0000  76 6f 6c 66 69 6c 65 2d 63 68 65 63 6b 73 75 6d   volfile-checksum
+       > <0  > <?????????????????????> < volfile-key
+0010  00 30 00 00 00 00 0b 00 00 00 09 76 6f 6c 66 69   .0.........volfi
+      volfile-key        > < /vol_dht              >
+0020  6c 65 2d 6b 65 79 00 2f 76 6f 6c 5f 64 68 74 00   le-key./vol_dht.
+      <?????????????????????> < client-version
+0030  00 00 00 0e 00 00 00 06 63 6c 69 65 6e 74 2d 76   ........client-v
+      client-version     > < 3.2.5         > <???????
+0040  65 72 73 69 6f 6e 00 33 2e 32 2e 35 00 00 00 00   ersion.3.2.5....
+      ?????????????> <process-uuid
+0050  0c 00 00 00 47 70 72 6f 63 65 73 73 2d 75 75 69   ....Gprocess-uui
+      uuid> < node1.ssa.example.net ......
+0060  64 00 6e 6f 64 65 31 2e 73 73 61 2e 65 78 61 6d   d.node1.ssa.exam
+0070  70 6c 65 2e 6e 65 74 2d 32 31 30 33 2d 32 30 31   ple.net-2103-201
+0080  32 2f 30 31 2f 30 37 2d 31 35 3a 33 33 3a 33 32   2/01/07-15:33:32
+0090  3a 38 33 35 33 33 30 2d 76 6f 6c 5f 64 68 74 2d   :835330-vol_dht-
+      node1.ssa.example.net    > <???????????????????
+00a0  63 6c 69 65 6e 74 2d 31 00 00 00 00 0c 00 00 00   client-1........
+      ?> < fops-version                       > <
+00b0  08 66 6f 70 73 2d 76 65 72 73 69 6f 6e 00 31 32   .fops-version.12
+      1298437         > <?????????????????????> <tran
+00c0  39 38 34 33 37 00 00 00 00 0e 00 00 00 07 74 72   98437.........tr
+      transport-type                       > <socket
+00d0  61 6e 73 70 6f 72 74 2d 74 79 70 65 00 73 6f 63   ansport-type.soc
+      socket    > <?????????????????????> <remote-sub
+00e0  6b 65 74 00 00 00 00 10 00 00 00 12 72 65 6d 6f   ket.........remo
+                                           > </export
+00f0  74 65 2d 73 75 62 76 6f 6c 75 6d 65 00 2f 65 78   te-subvolume./ex
+                                                 > <?
+0100  70 6f 72 74 2f 62 72 69 63 6b 5f 64 68 74 00 00   port/brick_dht..
+      ???????????????????> <remote-host
+0110  00 00 0b 00 00 00 06 72 65 6d 6f 74 65 2d 68 6f   .......remote-ho
+             > <node2          >
+0120  73 74 00 6e 6f 64 65 32 00 00 00 00               st.node2....
+
+
+volfile-checksum: 0
+			unknown: 00 00 00 0b 00 00 00 09
+volfile-key: /vol_dht
+			unknown: 00 00 00 0e 00 00 00 06
+client-version: 3.2.5
+			unknown: 00 00 00 0c 00 00 00 47
+process-uuid: node1.ssa.example.net
+			unknown: 00 00 00 0c 00 00 00 08
+fops-version: 1298437
+			unknown: 00 00 00 0e 00 00 00 07
+transport-type: socket
+			unknown: 00 00 00 10 00 00 00 12
+remote-subvolume: /export/brick_dht
+			unknown: 00 00 00 0b 00 00 00 06
+remote-host: node2
+			unknown: 00 00 00                <-- RPC fill bytes?
