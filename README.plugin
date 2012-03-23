@@ -1,10 +1,29 @@
+Prerequisites to build the plugin on Linux:
+- tools for building, including autoconf, make, gcc
+- Wireshark headers, on Fedora in the wireshark-devel package
+
+
 How to build the dissector as a plugin
 
-$ autoreconf -i
-$ ./configure
-$ make
-$ make rpm
-# rpm -Uvh build/RPMS/x86_64/wireshark-plugin-gluster-0.0.0-0.fc16.x86_64.rpm 
-$ wireshark something-gluster.pcap
+  $ autoreconf -i
+  $ ./configure
+  $ make
 
-Masatake YAMATO <yamato@redhat.com>
+
+How to create an RPM after building:
+
+  $ make rpm
+
+And install the RPM as root with something like this:
+
+  # rpm -Uvh build/RPMS/x86_64/wireshark-plugin-gluster-0.0.0-0.fc16.x86_64.rpm 
+
+
+Usage:
+
+Open a pre-captured file with Wireshark as normal:
+
+  $ wireshark something-gluster.pcap
+
+
+Original author: Masatake YAMATO <yamato@redhat.com>
