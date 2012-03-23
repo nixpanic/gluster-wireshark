@@ -1,11 +1,11 @@
 Summary: wireshark packet dissector for protocols used in gluster
-Name: gluster-wireshark-plugin
+Name: wireshark-plugin-gluster
 Version: @PACKAGE_VERSION@
 Release: 0%{?dist}
 License: GPLv2
 Group: Development/Tools
 
-Source0: gluster-wireshark-plugin-@PACKAGE_VERSION@.tar.bz2
+Source0: wireshark-plugin-gluster-@PACKAGE_VERSION@.tar.bz2
 
 Buildroot: %{_tmppath}/%{name}-root
 BuildRequires:	wireshark-devel
@@ -37,5 +37,9 @@ rm -rf $RPM_BUILD_ROOT
 
 
 %changelog
+* Fri Mar 23 2012 Niels de Vos <ndevos@redhat.com>
+- rename to wireshark-plugin-gluster
+
 * Tue Dec 14 2010 Masatake YAMATO <yamato@redhat.com> - 0.0.0
 - First RPM build.
+

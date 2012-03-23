@@ -23,4 +23,4 @@ packet-gluster.c: packet-gluster.patch
 packet-gluster.h: packet-gluster.c packet-gluster.patch
 	:
 
-EXTRA_DIST += gluster-wireshark-plugin.spec
+EXTRA_DIST += wireshark-plugin-gluster.spec

@@ -4,7 +4,7 @@ $ autoreconf -i
 $ ./configure
 $ make
 $ make rpm
-# rpm -Uvh build/RPMS/x86_64/gluster-wireshark-plugin-0.0.0-0.fc16.x86_64.rpm 
+# rpm -Uvh build/RPMS/x86_64/wireshark-plugin-gluster-0.0.0-0.fc16.x86_64.rpm 
 $ wireshark something-gluster.pcap
 
 Masatake YAMATO <yamato@redhat.com>
