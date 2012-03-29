@@ -24,6 +24,7 @@ Planned Development Stages
 
 Links
 
+- 'upstream' gluster dissector development: https://github.com/nixpanic/gluster-wireshark-1.4
 - Packages: http://repos.fedorapeople.org/repos/devos/wireshark-gluster/
 - http://blog.nixpanic.net/2012/01/displaying-gluster-traffic-in-wireshark.html
 - http://blog.nixpanic.net/2012/02/improvements-on-displaying-gluster.html
