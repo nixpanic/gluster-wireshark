@@ -154,7 +154,7 @@ index 042a5f6..7375521 100644
  #define RPCSEC_GSS 6
  #define AUTH_GSSAPI 300001
 +/* inofficial (non-IANA) value for GlusterFS V330 */
-+#define AUTH_GLUSTERFS_V2 390050
++#define AUTH_GLUSTERFS_V2 390039
  /* Pseudo-flavors used for security mechanisms while using 
   * RPCSEC_GSS
   */
