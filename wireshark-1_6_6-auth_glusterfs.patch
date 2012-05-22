@@ -1,0 +1,220 @@
+diff --git a/epan/dissectors/packet-rpc.c b/epan/dissectors/packet-rpc.c
+index a629b0c..13a45a2 100644
+--- a/epan/dissectors/packet-rpc.c
++++ b/epan/dissectors/packet-rpc.c
+@@ -61,6 +61,11 @@
+  *	RFC 2695, "Authentication Mechanisms for ONC RPC"
+  *
+  *	although we don't currently dissect AUTH_DES or AUTH_KERB.
++ *
++ *	RFC 5531, "Appendix C: Current Number Assignments" defines AUTH_RSA.
++ *	AUTH_RSA is not implemented for any known RPC-protocols. The Gluster
++ *	protocols (ab)use AUTH_RSA for their own AUTH-flavor. AUTH_RSA is
++ *	therefore dissected as the inofficial AUTH_GLUSTER.
+  */
+ 
+ /* desegmentation of RPC over TCP */
+@@ -98,6 +103,7 @@ const value_string rpc_auth_flavor[] = {
+ 	{ AUTH_UNIX, "AUTH_UNIX" },
+ 	{ AUTH_SHORT, "AUTH_SHORT" },
+ 	{ AUTH_DES, "AUTH_DES" },
++	{ AUTH_RSA, "AUTH_RSA/Gluster" },
+ 	{ RPCSEC_GSS, "RPCSEC_GSS" },
+ 	{ AUTH_GSSAPI, "AUTH_GSSAPI" },
+ 	{ RPCSEC_GSS_KRB5, "RPCSEC_GSS_KRB5" },
+@@ -109,6 +115,7 @@ const value_string rpc_auth_flavor[] = {
+ 	{ RPCSEC_GSS_SPKM3, "RPCSEC_GSS_SPKM3" },
+ 	{ RPCSEC_GSS_SPKM3I, "RPCSEC_GSS_SPKM3I" },
+ 	{ RPCSEC_GSS_SPKM3P, "RPCSEC_GSS_SPKM3P" },
++	{ AUTH_GLUSTERFS, "AUTH_GLUSTERFS" },
+ 	{ 0, NULL }
+ };
+ 
+@@ -189,6 +196,8 @@ static int hf_rpc_auth_flavor = -1;
+ static int hf_rpc_auth_length = -1;
+ static int hf_rpc_auth_machinename = -1;
+ static int hf_rpc_auth_stamp = -1;
++static int hf_rpc_auth_lk_owner = -1;
++static int hf_rpc_auth_pid = -1;
+ static int hf_rpc_auth_uid = -1;
+ static int hf_rpc_auth_gid = -1;
+ static int hf_rpc_authgss_v = -1;
+@@ -793,17 +802,59 @@ dissect_rpc_array(tvbuff_t *tvb, packet_info *pinfo, proto_tree *tree,
+ }
+ 
+ static int
+-dissect_rpc_authunix_cred(tvbuff_t* tvb, proto_tree* tree, int offset)
++dissect_rpc_authunix_groups(tvbuff_t* tvb, proto_tree* tree, int offset)
+ {
+-	guint stamp;
+-	guint uid;
+-	guint gid;
+ 	guint gids_count;
+ 	guint gids_i;
+ 	guint gids_entry;
+-	proto_item *gitem;
++	proto_item *gitem = NULL;
+ 	proto_tree *gtree = NULL;
+ 
++	gids_count = tvb_get_ntohl(tvb,offset);
++	if (tree) {
++		gitem = proto_tree_add_text(tree, tvb, offset,
++			4+gids_count*4, "Auxiliary GIDs (%d)", gids_count);
++		gtree = proto_item_add_subtree(gitem, ett_rpc_gids);
++	}
++	offset += 4;
++
++	/* first, open with [ */
++	if (tree && gids_count > 0)
++		proto_item_append_text(gitem, " [");
++
++	for (gids_i = 0 ; gids_i < gids_count; gids_i++) {
++		gids_entry = tvb_get_ntohl(tvb,offset);
++		if (gtree) {
++			proto_tree_add_uint(gtree, hf_rpc_auth_gid, tvb,
++				offset, 4, gids_entry);
++		}
++
++		/* add at most 16 GIDs to the text */
++		if (tree && gids_i < 16) {
++			if (gids_i > 0)
++				proto_item_append_text(gitem, ", ");
++
++			proto_item_append_text(gitem, "%d", gids_entry);
++		} else if (tree && gids_i == 16) {
++			proto_item_append_text(gitem, "...");
++		}
++		offset += 4;
++	}
++
++	/* finally, close with ] */
++	if (tree && gids_count > 0)
++		proto_item_append_text(gitem, "]");
++
++	return offset;
++}
++
++static int
++dissect_rpc_authunix_cred(tvbuff_t* tvb, proto_tree* tree, int offset)
++{
++	guint stamp;
++	guint uid;
++	guint gid;
++
+ 	stamp = tvb_get_ntohl(tvb,offset+0);
+ 	if (tree)
+ 		proto_tree_add_uint(tree, hf_rpc_auth_stamp, tvb,
+@@ -825,23 +876,7 @@ dissect_rpc_authunix_cred(tvbuff_t* tvb, proto_tree* tree, int offset)
+ 			offset+0, 4, gid);
+ 	offset += 4;
+ 
+-	gids_count = tvb_get_ntohl(tvb,offset+0);
+-	if (tree) {
+-		gitem = proto_tree_add_text(tree, tvb,
+-			offset, 4+gids_count*4, "Auxiliary GIDs");
+-		gtree = proto_item_add_subtree(gitem, ett_rpc_gids);
+-	}
+-	offset += 4;
+-
+-	for (gids_i = 0 ; gids_i < gids_count ; gids_i++) {
+-		gids_entry = tvb_get_ntohl(tvb,offset+0);
+-		if (gtree)
+-		proto_tree_add_uint(gtree, hf_rpc_auth_gid, tvb,
+-			offset, 4, gids_entry);
+-		offset+=4;
+-	}
+-	/* how can I NOW change the gitem to print a list with
+-		the first 16 gids? */
++	offset = dissect_rpc_authunix_groups(tvb, tree, offset);
+ 
+ 	return offset;
+ }
+@@ -941,6 +976,30 @@ dissect_rpc_authdes_cred(tvbuff_t* tvb, proto_tree* tree, int offset)
+ }
+ 
+ static int
++dissect_rpc_authgluster_cred(tvbuff_t* tvb, proto_tree* tree, int offset)
++{
++	offset = dissect_rpc_bytes(tvb, tree, hf_rpc_auth_lk_owner, offset, 8, FALSE, NULL);
++	offset = dissect_rpc_uint32(tvb, tree, hf_rpc_auth_pid, offset);
++	offset = dissect_rpc_uint32(tvb, tree, hf_rpc_auth_uid, offset);
++	offset = dissect_rpc_uint32(tvb, tree, hf_rpc_auth_gid, offset);
++	offset = dissect_rpc_authunix_groups(tvb, tree, offset);
++
++	return offset;
++}
++
++static int
++dissect_rpc_authglusterfs_v2_cred(tvbuff_t* tvb, proto_tree* tree, int offset)
++{
++	offset = dissect_rpc_uint32(tvb, tree, hf_rpc_auth_pid, offset);
++	offset = dissect_rpc_uint32(tvb, tree, hf_rpc_auth_uid, offset);
++	offset = dissect_rpc_uint32(tvb, tree, hf_rpc_auth_gid, offset);
++	offset = dissect_rpc_authunix_groups(tvb, tree, offset);
++	offset = dissect_rpc_data(tvb, tree, hf_rpc_auth_lk_owner, offset);
++
++	return offset;
++}
++
++static int
+ dissect_rpc_authgssapi_cred(tvbuff_t* tvb, proto_tree* tree, int offset)
+ {
+ 	guint agc_v;
+@@ -999,10 +1058,19 @@ dissect_rpc_cred(tvbuff_t* tvb, proto_tree* tree, int offset)
+ 			dissect_rpc_authdes_cred(tvb, ctree, offset+8);
+ 			break;
+ 
++		case AUTH_RSA:
++			/* AUTH_RSA is (ab)used by Gluster */
++			dissect_rpc_authgluster_cred(tvb, ctree, offset+8);
++			break;
++
+ 		case RPCSEC_GSS:
+ 			dissect_rpc_authgss_cred(tvb, ctree, offset+8);
+ 			break;
+ 
++		case AUTH_GLUSTERFS:
++			dissect_rpc_authglusterfs_v2_cred(tvb, ctree, offset+8);
++			break;
++
+ 		case AUTH_GSSAPI:
+ 			dissect_rpc_authgssapi_cred(tvb, ctree, offset+8);
+ 			break;
+@@ -3619,6 +3687,12 @@ proto_register_rpc(void)
+ 		{ &hf_rpc_auth_stamp, {
+ 			"Stamp", "rpc.auth.stamp", FT_UINT32, BASE_HEX,
+ 			NULL, 0, NULL, HFILL }},
++		{ &hf_rpc_auth_lk_owner, {
++			"Lock Owner", "rpc.auth.lk_owner", FT_BYTES, BASE_NONE,
++			NULL, 0, NULL, HFILL }},
++		{ &hf_rpc_auth_pid, {
++			"PID", "rpc.auth.pid", FT_UINT32, BASE_DEC,
++			NULL, 0, NULL, HFILL }},
+ 		{ &hf_rpc_auth_uid, {
+ 			"UID", "rpc.auth.uid", FT_UINT32, BASE_DEC,
+ 			NULL, 0, NULL, HFILL }},
+diff --git a/epan/dissectors/packet-rpc.h b/epan/dissectors/packet-rpc.h
+index 042a5f6..2dd9977 100644
+--- a/epan/dissectors/packet-rpc.h
++++ b/epan/dissectors/packet-rpc.h
+@@ -38,7 +38,7 @@
+ #define AUTH_SHORT 2
+ #define AUTH_DES 3
+ #define AUTH_KRB4 4
+-#define AUTH_DH 5
++#define AUTH_RSA 5
+ #define RPCSEC_GSS 6
+ #define AUTH_GSSAPI 300001
+ /* Pseudo-flavors used for security mechanisms while using 
+@@ -53,6 +53,11 @@
+ #define RPCSEC_GSS_SPKM3 390009
+ #define RPCSEC_GSS_SPKM3I 390010
+ #define RPCSEC_GSS_SPKM3P 390011
++/* GlusterFS requested an RPC-AUTH number from IANA,
++ * until a number has been granted 390039 is used.
++ * See also: http://review.gluster.com/3230
++ */
++#define AUTH_GLUSTERFS 390039
+ 
+ #define MSG_ACCEPTED 0
+ #define MSG_DENIED 1
