@@ -8,7 +8,8 @@ Group: Development/Tools
 Source0: wireshark-plugin-gluster-@PACKAGE_VERSION@.tar.bz2
 
 Buildroot: %{_tmppath}/%{name}-root
-BuildRequires:	wireshark-devel
+BuildRequires: glib2-devel
+BuildRequires: wireshark-devel
 Requires: wireshark
 
 %description
