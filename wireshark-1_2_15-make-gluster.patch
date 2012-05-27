@@ -1,22 +1,21 @@
 diff --git a/epan/dissectors/Makefile.common b/epan/dissectors/Makefile.common
-index 9ae956f..5d81c42 100644
+index 9ae956f..9272516 100644
 --- a/epan/dissectors/Makefile.common
 +++ b/epan/dissectors/Makefile.common
-@@ -455,6 +455,13 @@ DISSECTOR_SRC = \
+@@ -455,6 +455,12 @@ DISSECTOR_SRC = \
  	packet-gdsdb.c		\
  	packet-gift.c		\
  	packet-giop.c		\
-+	packet-gluster.c		\
-+	packet-gluster_cli.c		\
-+	packet-gluster_dump.c		\
-+	packet-gluster_gd_mgmt.c	\
-+	packet-gluster_hndsk.c		\
-+	packet-gluster_pmap.c		\
-+	packet-glusterfs.c		\
++	packet-gluster_cli.c	\
++	packet-gluster_dump.c	\
++	packet-glusterfs.c	\
++	packet-gluster_gd_mgmt.c \
++	packet-gluster_hndsk.c	\
++	packet-gluster_pmap.c	\
  	packet-gmrp.c		\
  	packet-gnutella.c	\
  	packet-gpef.c		\
-@@ -1036,6 +1043,7 @@ DISSECTOR_INCLUDES =	\
+@@ -1036,6 +1042,7 @@ DISSECTOR_INCLUDES =	\
  	packet-frame.h	\
  	packet-ftam.h	\
  	packet-giop.h	\
@@ -24,21 +23,3 @@ index 9ae956f..5d81c42 100644
  	packet-gnm.h	\
  	packet-gnutella.h	\
  	packet-gre.h	\
-diff --git a/epan/dissectors/Makefile.in b/epan/dissectors/Makefile.in
-index dd95d2a..6c43001 100644
---- a/epan/dissectors/Makefile.in
-+++ b/epan/dissectors/Makefile.in
-@@ -1553,6 +1553,13 @@ DISSECTOR_SRC = \
- 	packet-gdsdb.c		\
- 	packet-gift.c		\
- 	packet-giop.c		\
-+	packet-gluster.c		\
-+	packet-gluster_cli.c		\
-+	packet-gluster_dump.c		\
-+	packet-gluster_gd_mgmt.c	\
-+	packet-gluster_hndsk.c		\
-+	packet-gluster_pmap.c		\
-+	packet-glusterfs.c		\
- 	packet-gmrp.c		\
- 	packet-gnutella.c	\
- 	packet-gpef.c		\

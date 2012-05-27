@@ -2,7 +2,6 @@ AUTOMAKE_OPTIONS = foreign
 include rpm.mk
 
 BUILT_SOURCES = \
-	packet-gluster.c \
 	packet-gluster.h \
 	packet-gluster_cli.c \
 	packet-gluster_dump.c \
