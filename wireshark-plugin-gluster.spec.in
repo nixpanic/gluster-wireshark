@@ -8,8 +8,8 @@ Group: Development/Tools
 Source0: wireshark-plugin-gluster-@PACKAGE_VERSION@.tar.bz2
 
 Buildroot: %{_tmppath}/%{name}-root
-BuildRequires: glib2-devel
-BuildRequires: wireshark-devel
+BuildRequires: autoconf, libtool
+BuildRequires: wireshark-devel, glib2-devel
 Requires: wireshark
 
 %description
@@ -19,6 +19,7 @@ wireshark packet dissector for protocol used in gluster.
 %setup -q
 
 %build
+autoreconf -i
 %configure
 make
 

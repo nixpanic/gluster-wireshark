@@ -6,7 +6,7 @@ rpm: dist
 .PHONY: srpm
 srpm: dist
 	$(mkinstalldirs) build/SRPMS
-	rpmbuild --define "_topdir `pwd`/build" -ts $(DIST_ARCHIVES)
+	rpmbuild --nodeps --define "_topdir `pwd`/build" -ts $(DIST_ARCHIVES)
 
 clean-local::
 	/bin/rm -rf build
